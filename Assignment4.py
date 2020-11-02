@@ -1,20 +1,19 @@
 #!/usr/bin/env python3
-
+import sys
+from Porter_Stemmer_Python import PorterStemmer
 '''
 1. Split sentence by spaces
 2. Remove numbers and symbols() from words
 3. Convert to lower case
 5. remove stop words from dictionary
 ------------------------------------------------------------
-6. perform stemming ie. computer-program -> computer program
-7.
 '''
 def read_file(filename):
     f = open(filename)
     return f.readlines()
 
 def remove_chars(line):
-    special_chars = [',',';','.','"',')','(','1','2','3','4','5','6','7','8','9','\n']
+    special_chars = [',',';','.','"',')',"'",'(','1','2','3','4','5','6','7','8','9','\n']
     blank = ''
     words = line.split()
     fixed_word = ""
@@ -47,16 +46,31 @@ def remove_stop_words(words):
             is_sw = False
     return words2
 
+def remove_hyphens(words):
+    for i,w in enumerate(words):
+        if '-' in w:
+            broken = w.split('-')
+            del words[i]
+            for b in broken:
+                words.append(b)
+    return words
+
+         
+
 def main():
     lines = read_file("paragraphs.txt")
-    new_f = open("edit.txt", 'w')
+    mined_file = "edit.txt"             # file that contains the text after steps A-E are performed
+    ported_file = "ported.txt"         # file that contains output of PorterStemmer
+    new_f = open(mined_file, 'w')
 
-    edit = remove_stop_words(remove_chars(lines[0]))
+    edit = remove_stop_words(remove_hyphens(remove_chars(lines[0])))
 
     for w in edit:
         new_f.write(w + " ")
-
-
+    new_f.close()
+    p = PorterStemmer()
+    s = p.run("edit.txt")
+    print(s)
 
 if __name__=='__main__':
     main()

@@ -343,25 +343,26 @@ class PorterStemmer:
         self.step5()
         return self.b[self.k0:self.k+1]
 
+    def run(self,filename):
+        infile = open(filename, 'r')
+        out_string = ""
+        while 1:
+            output = ''
+            word = ''
+            line = infile.readline()
+            if line == '':
+                infile.close()
+                return out_string
+            for c in line:
+                if c.isalpha():
+                    word += c.lower()
+                else:
+                    if word:
+                        output += self.stem(word, 0,len(word)-1)
+                        word = ''
+                    output += c.lower()
+            out_string +=output
 
 if __name__ == '__main__':
     p = PorterStemmer()
-    if len(sys.argv) > 1:
-        for f in sys.argv[1:]:
-            infile = open(f, 'r')
-            while 1:
-                output = ''
-                word = ''
-                line = infile.readline()
-                if line == '':
-                    break
-                for c in line:
-                    if c.isalpha():
-                        word += c.lower()
-                    else:
-                        if word:
-                            output += p.stem(word, 0,len(word)-1)
-                            word = ''
-                        output += c.lower()
-                print(output)
-            infile.close()
+    print(p.run('edit.txt'))
