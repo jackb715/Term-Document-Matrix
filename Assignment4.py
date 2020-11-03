@@ -60,17 +60,20 @@ def remove_hyphens(words):
 def main():
     lines = read_file("paragraphs.txt")
     mined_file = "edit.txt"             # file that contains the text after steps A-E are performed
-    ported_file = "ported.txt"         # file that contains output of PorterStemmer
-    new_f = open(mined_file, 'w')
-
-    edit = remove_stop_words(remove_hyphens(remove_chars(lines[0])))
-
-    for w in edit:
-        new_f.write(w + " ")
-    new_f.close()
+    tdms = []
     p = PorterStemmer()
-    s = p.run("edit.txt")
-    print(s)
+    for l in lines:
+        edit_f = open(mined_file,'w')
+        edit = remove_stop_words(remove_hyphens(remove_chars(l))) # remove special characters,split hyphenated words, and remove stop words
+        for w in edit:
+            edit_f.write(w + " ") # write edited text to file so porter stemmer can be used
+        edit_f.close()
+        stemmed = p.run("edit.txt")  # stemmed text
+        open(mined_file,'w').close() # clear the file for the next paragraph
+        tdms.append(stemmed.split()) # add mined text to a list
+
+    tdms = list(filter(None,tdms))
+    print(tdms)
 
 if __name__=='__main__':
     main()
