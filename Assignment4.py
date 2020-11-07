@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import sys
+from collections import Counter
 from Porter_Stemmer_Python import PorterStemmer
 '''
 1. Split sentence by spaces
@@ -13,7 +14,7 @@ def read_file(filename):
     return f.readlines()
 
 def remove_chars(line):
-    special_chars = [',',';','.','"',')',"'",'(','1','2','3','4','5','6','7','8','9','\n']
+    special_chars = [',',';','.','"',')',"'",'(','1','2','3','4','5','6','7','8','9','\n','[',']',':','€','¦']
     blank = ''
     words = line.split()
     fixed_word = ""
@@ -73,7 +74,11 @@ def main():
         tdms.append(stemmed.split()) # add mined text to a list
 
     tdms = list(filter(None,tdms))
-    print(tdms)
+    vector = []
+    for t in tdms:
+        vector.append(Counter(t))
+
+
 
 if __name__=='__main__':
     main()
