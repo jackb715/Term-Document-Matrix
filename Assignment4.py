@@ -1,20 +1,18 @@
 #!/usr/bin/env python3
+import collections 
 import sys
-from collections import Counter
 from Porter_Stemmer_Python import PorterStemmer
-'''
-1. Split sentence by spaces
-2. Remove numbers and symbols() from words
-3. Convert to lower case
-5. remove stop words from dictionary
-------------------------------------------------------------
-'''
+import pandas as pd
+from sklearn.feature_extraction.text import CountVectorizer
+import numpy as np
+
 def read_file(filename):
     f = open(filename)
     return f.readlines()
 
+#removes special characters frm words
 def remove_chars(line):
-    special_chars = [',',';','.','"',')',"'",'(','1','2','3','4','5','6','7','8','9','\n','[',']',':','€','¦']
+    special_chars = [',',';','.','"',')',"'",'(','0','1','2','3','4','5','6','7','8','9', '[', ']','â', '€', '?','¦', ':', '\n'] 
     blank = ''
     words = line.split()
     fixed_word = ""
@@ -30,6 +28,7 @@ def remove_chars(line):
             new_words2.append(w.lower())
     return new_words2
 
+# removes the words from the list that are in stop_words.txt
 def remove_stop_words(words):
     stop_f = open("stop_words.txt")
     sw = stop_f.read().replace('\n',' ')
@@ -56,7 +55,34 @@ def remove_hyphens(words):
                 words.append(b)
     return words
 
-         
+def FCAN(df):
+    alpha = 1 #learning rate
+    threshold = 8
+    w = [] # center of gravity for each cluster
+    clusters = [] # record the paragraphs contained in each cluster
+    w.append(alpha*np.array(df.iloc[0])) # initialize first cluster cog
+    clusters.append([0])
+    i = 1
+    while i < df.shape[0]: # for every entry in the tdm
+        min_ed = 10**10
+        x = np.array(df.iloc[i])
+        for j,cluster in enumerate(w): # determine the ed from each cluster to x
+            ed = euc_dist(cluster,x)
+            if ed < min_ed:
+                min_ed = ed
+                min_index = j # record which cluster was closest to x
+        if min_ed < threshold: # adjust center of gravity for closest cluster if less than threshold
+            w[min_index] = (w[min_index] + alpha*x)/(len(w) + 1)
+            clusters[min_index].append(i)
+        else:
+            w.append(alpha*x) #create new cluster if ed was greater than threshold
+            clusters.append([i])
+        i +=1
+    return clusters # return the clusters
+
+def euc_dist(v1,v2):
+    return np.linalg.norm(v1-v2) #return the euclidean distance between two vectors
+
 
 def main():
     lines = read_file("paragraphs.txt")
@@ -73,11 +99,27 @@ def main():
         open(mined_file,'w').close() # clear the file for the next paragraph
         tdms.append(stemmed.split()) # add mined text to a list
 
-    tdms = list(filter(None,tdms))
-    vector = []
-    for t in tdms:
-        vector.append(Counter(t))
+        with open('stemmed_file.txt', 'w') as f:
+            for item in tdms:
+                if item:
+                    f.write("%s\n" % item)
 
+    tdms = list(filter(None,tdms)) #remove empty lines
+
+    # create tdm from feature vectors
+    docs = open("stemmed_file.txt")
+    vec = CountVectorizer()
+    X = vec.fit_transform(docs)
+    total_features = len(vec.vocabulary_)
+    df= pd.DataFrame(X.toarray(), columns=vec.get_feature_names())
+    total = df.T.sort_values(by=0, ascending=False).head(100)
+    final=total.transpose()
+    final.to_csv('TEST_TDM.csv', index=False, header=True)
+
+    # run algorithm on tdm and print the results
+    subjects = FCAN(final)
+    for i,f in enumerate(subjects):
+        print("Subject "+ str(i)+ " included paragraphs" + str(f))
 
 
 if __name__=='__main__':
